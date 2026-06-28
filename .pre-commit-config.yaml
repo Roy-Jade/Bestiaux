@@ -5,8 +5,10 @@ repos:
       - id: ruff
         args: [--fix]
         files: ^backend/
+        exclude: ^backend/migrations/
       - id: ruff-format
         files: ^backend/
+        exclude: ^backend/migrations/
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.9.1

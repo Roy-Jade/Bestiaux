@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
@@ -17,15 +16,4 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     creatures: Mapped[list[Creature]] = relationship(back_populates="owner")  # noqa: F821
-    sessions: Mapped[list[Session]] = relationship(back_populates="user")
     wild_gene_pool: Mapped[list[WildGenePool]] = relationship(back_populates="user")  # noqa: F821
-
-
-class Session(Base):
-    __tablename__ = "sessions"
-
-    user_id: Mapped[uuid.UUID] = mapped_column(index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-    user: Mapped[User] = relationship(back_populates="sessions")

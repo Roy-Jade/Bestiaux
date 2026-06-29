@@ -3,7 +3,7 @@ from bestiaux.models.biome import Biome
 from bestiaux.models.creature import Creature, DeathCause, LifeStage
 from bestiaux.models.genetics import Allele, CreatureGenome, TraitCategory, WildGenePool
 from bestiaux.models.interaction import InteractionLog, InteractionType, TrainTarget
-from bestiaux.models.user import Session, User
+from bestiaux.models.user import User
 
 __all__ = [
     "Allele",
@@ -15,7 +15,6 @@ __all__ = [
     "InteractionLog",
     "InteractionType",
     "LifeStage",
-    "Session",
     "TrainTarget",
     "TraitCategory",
     "User",

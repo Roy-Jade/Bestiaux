@@ -3,14 +3,17 @@ from datetime import UTC, datetime
 
 from bestiaux.core.exceptions import ConflictError, NotFoundError
 from bestiaux.creature.domain import CreatureEntity
-from bestiaux.creature.protocols import ICreatureRepository
+from bestiaux.creature.protocols import ICreatureRepository, IGenomeAssigner
 from bestiaux.models.creature import LifeStage
 from bestiaux.models.interaction import InteractionType
 
 
 class CreatureService:
-    def __init__(self, creature_repo: ICreatureRepository) -> None:
+    def __init__(
+        self, creature_repo: ICreatureRepository, genome_assigner: IGenomeAssigner
+    ) -> None:
         self.creature_repo = creature_repo
+        self.genome_assigner = genome_assigner
 
     async def create_first_creature(self, owner_id: uuid.UUID, name: str) -> CreatureEntity:
         existing = await self.creature_repo.get_active_for_user(owner_id)
@@ -26,7 +29,9 @@ class CreatureService:
             last_interaction_at=now,
             generation=1,
         )
-        return await self.creature_repo.create(creature)
+        created = await self.creature_repo.create(creature)
+        await self.genome_assigner.assign_baseline_genome(created.id)
+        return created
 
     async def get_active_creature(self, user_id: uuid.UUID) -> CreatureEntity:
         creature = await self.creature_repo.get_active_for_user(user_id)

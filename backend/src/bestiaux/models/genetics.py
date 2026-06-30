@@ -24,6 +24,7 @@ class Allele(Base):
     name: Mapped[str] = mapped_column(String(100))
     is_dominant: Mapped[bool] = mapped_column(default=False)
     sprite_key: Mapped[str] = mapped_column(String(200))
+    biome_id: Mapped[str | None] = mapped_column(ForeignKey("biomes.id"), default=None)
 
 
 class CreatureGenome(Base):

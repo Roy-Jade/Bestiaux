@@ -1,4 +1,5 @@
 from bestiaux.models.creature import LifeStage
+from bestiaux.models.genetics import TraitCategory
 
 PHASE_DURATIONS_SECONDS: dict[LifeStage, float | None] = {
     LifeStage.BABY: 1 * 60 * 60,  # 1 hour
@@ -29,3 +30,11 @@ AUTONOMY_GAIN_PER_INTERACTION = 0.5
 MAX_REPRODUCTIONS = 5
 
 TRAINING_VISUAL_THRESHOLDS = [25, 50, 75, 100]
+
+BASELINE_ALLELES: dict[TraitCategory, str] = {
+    TraitCategory.EYES: "round_eyes",
+    TraitCategory.SKULL_TOP: "no_horn",
+    TraitCategory.DORSAL: "no_dorsal",
+    TraitCategory.CAUDAL: "no_tail",
+    TraitCategory.COLOR: "light_grey",
+}

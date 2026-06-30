@@ -7,13 +7,22 @@ from bestiaux.creature.domain import CreatureEntity
 from bestiaux.creature.repository import CreatureRepository
 from bestiaux.creature.schemas import CreateCreatureRequest, CreatureResponse, InteractRequest
 from bestiaux.creature.service import CreatureService
+from bestiaux.genetics.repository import AlleleRepository, CreatureGenomeRepository
+from bestiaux.genetics.service import GeneticsService
 from bestiaux.models.interaction import InteractionType
 
 router = APIRouter(prefix="/creature", tags=["creature"])
 
 
 def _get_creature_service(db: AsyncSession = Depends(get_db)) -> CreatureService:
-    return CreatureService(creature_repo=CreatureRepository(session=db))
+    genetics_service = GeneticsService(
+        allele_repo=AlleleRepository(session=db),
+        genome_repo=CreatureGenomeRepository(session=db),
+    )
+    return CreatureService(
+        creature_repo=CreatureRepository(session=db),
+        genome_assigner=genetics_service,
+    )
 
 
 def _to_response(creature: CreatureEntity) -> CreatureResponse:

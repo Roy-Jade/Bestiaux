@@ -34,11 +34,20 @@ class FakeCreatureRepository:
                 return
 
 
+class FakeGenomeAssigner:
+    def __init__(self) -> None:
+        self.assigned_for: list[uuid.UUID] = []
+
+    async def assign_baseline_genome(self, creature_id: uuid.UUID) -> object:
+        self.assigned_for.append(creature_id)
+        return None
+
+
 class TestCreateFirstCreature:
     async def test_creates_baby_creature(self) -> None:
         # GIVEN
         repo = FakeCreatureRepository()
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
         user_id = uuid.uuid4()
 
         # WHEN
@@ -58,7 +67,7 @@ class TestCreateFirstCreature:
         user_id = uuid.uuid4()
         existing = CreatureEntity(owner_id=user_id, name="Existing", is_active=True)
         repo = FakeCreatureRepository(creatures=[existing])
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN / THEN
         with pytest.raises(ConflictError, match="Already has an active creature"):
@@ -79,7 +88,7 @@ class TestGetActiveCreature:
             is_active=True,
         )
         repo = FakeCreatureRepository(creatures=[creature])
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN
         result = await service.get_active_creature(user_id)
@@ -90,7 +99,7 @@ class TestGetActiveCreature:
     async def test_raises_if_no_active_creature(self) -> None:
         # GIVEN
         repo = FakeCreatureRepository()
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN / THEN
         with pytest.raises(NotFoundError, match="No active creature"):
@@ -111,7 +120,7 @@ class TestInteract:
             is_active=True,
         )
         repo = FakeCreatureRepository(creatures=[creature])
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN
         result = await service.interact(user_id, InteractionType.FEED)
@@ -131,7 +140,7 @@ class TestInteract:
             is_active=True,
         )
         repo = FakeCreatureRepository(creatures=[creature])
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN / THEN
         with pytest.raises(ConflictError, match="training endpoint"):
@@ -151,7 +160,7 @@ class TestFreeze:
             is_active=True,
         )
         repo = FakeCreatureRepository(creatures=[creature])
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN
         result = await service.freeze(user_id)
@@ -173,7 +182,7 @@ class TestFreeze:
             freeze_started_at=now,
         )
         repo = FakeCreatureRepository(creatures=[creature])
-        service = CreatureService(creature_repo=repo)
+        service = CreatureService(creature_repo=repo, genome_assigner=FakeGenomeAssigner())
 
         # WHEN
         result = await service.unfreeze(user_id)

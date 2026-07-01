@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bestiaux.genetics.domain import AlleleEntity, CreatureGene, Genome
-from bestiaux.models.genetics import Allele, CreatureGenome
+from bestiaux.models.genetics import Allele, CreatureGenome, TraitCategory, WildGenePool
 
 
 class AlleleRepository:
@@ -60,4 +60,31 @@ class CreatureGenomeRepository:
                     expressed_allele=gene.expressed_allele,
                 )
             )
+        await self.session.commit()
+
+
+class WildPoolRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def get_unlocked_for_user(self, user_id: uuid.UUID) -> dict[str, list[str]]:
+        result = await self.session.execute(
+            select(WildGenePool, Allele)
+            .join(Allele, WildGenePool.allele_id == Allele.id)
+            .where(WildGenePool.user_id == user_id)
+        )
+        pool: dict[str, list[str]] = {cat.value: [] for cat in TraitCategory}
+        for row in result:
+            pool[row.Allele.trait_category.value].append(row.WildGenePool.allele_id)
+        return pool
+
+    async def unlock(self, user_id: uuid.UUID, allele_id: str) -> None:
+        existing = await self.session.execute(
+            select(WildGenePool).where(
+                WildGenePool.user_id == user_id, WildGenePool.allele_id == allele_id
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            return
+        self.session.add(WildGenePool(user_id=user_id, allele_id=allele_id))
         await self.session.commit()

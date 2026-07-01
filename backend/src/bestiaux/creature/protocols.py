@@ -16,3 +16,7 @@ class ICreatureRepository(Protocol):
 
 class IGenomeAssigner(Protocol):
     async def assign_baseline_genome(self, creature_id: uuid.UUID) -> object: ...
+
+
+class IWildPoolUnlocker(Protocol):
+    async def unlock_for_child_stage(self, creature_id: uuid.UUID, user_id: uuid.UUID) -> None: ...

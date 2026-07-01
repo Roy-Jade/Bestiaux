@@ -7,21 +7,30 @@ from bestiaux.creature.domain import CreatureEntity
 from bestiaux.creature.repository import CreatureRepository
 from bestiaux.creature.schemas import CreateCreatureRequest, CreatureResponse, InteractRequest
 from bestiaux.creature.service import CreatureService
-from bestiaux.genetics.repository import AlleleRepository, CreatureGenomeRepository
+from bestiaux.genetics.repository import (
+    AlleleRepository,
+    CreatureGenomeRepository,
+    WildPoolRepository,
+)
 from bestiaux.genetics.service import GeneticsService
+from bestiaux.genetics.wild_pool_service import WildPoolService
 from bestiaux.models.interaction import InteractionType
 
 router = APIRouter(prefix="/creature", tags=["creature"])
 
 
 def _get_creature_service(db: AsyncSession = Depends(get_db)) -> CreatureService:
+    genome_repo = CreatureGenomeRepository(session=db)
+    pool_repo = WildPoolRepository(session=db)
     genetics_service = GeneticsService(
         allele_repo=AlleleRepository(session=db),
-        genome_repo=CreatureGenomeRepository(session=db),
+        genome_repo=genome_repo,
     )
+    wild_pool_service = WildPoolService(genome_repo=genome_repo, pool_repo=pool_repo)
     return CreatureService(
         creature_repo=CreatureRepository(session=db),
         genome_assigner=genetics_service,
+        wild_pool_unlocker=wild_pool_service,
     )
 
 

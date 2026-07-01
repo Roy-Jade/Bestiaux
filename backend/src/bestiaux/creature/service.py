@@ -3,17 +3,22 @@ from datetime import UTC, datetime
 
 from bestiaux.core.exceptions import ConflictError, NotFoundError
 from bestiaux.creature.domain import CreatureEntity
-from bestiaux.creature.protocols import ICreatureRepository, IGenomeAssigner
+from bestiaux.creature.protocols import ICreatureRepository, IGenomeAssigner, IWildPoolUnlocker
+from bestiaux.game_constants import PHASE_ORDER
 from bestiaux.models.creature import LifeStage
 from bestiaux.models.interaction import InteractionType
 
 
 class CreatureService:
     def __init__(
-        self, creature_repo: ICreatureRepository, genome_assigner: IGenomeAssigner
+        self,
+        creature_repo: ICreatureRepository,
+        genome_assigner: IGenomeAssigner,
+        wild_pool_unlocker: IWildPoolUnlocker,
     ) -> None:
         self.creature_repo = creature_repo
         self.genome_assigner = genome_assigner
+        self.wild_pool_unlocker = wild_pool_unlocker
 
     async def create_first_creature(self, owner_id: uuid.UUID, name: str) -> CreatureEntity:
         existing = await self.creature_repo.get_active_for_user(owner_id)
@@ -38,9 +43,14 @@ class CreatureService:
         if not creature:
             raise NotFoundError("No active creature")
 
+        previous_stage = creature.life_stage
         now = datetime.now(UTC)
         creature.apply_reconnection(now)
         await self.creature_repo.save(creature)
+
+        if creature.is_alive and self._crossed_child_stage(previous_stage, creature.life_stage):
+            await self.wild_pool_unlocker.unlock_for_child_stage(creature.id, user_id)
+
         return creature
 
     async def interact(
@@ -91,3 +101,8 @@ class CreatureService:
         if not creature.is_alive:
             raise ConflictError("Creature is dead")
         return creature
+
+    @staticmethod
+    def _crossed_child_stage(previous: LifeStage, current: LifeStage) -> bool:
+        child_index = PHASE_ORDER.index(LifeStage.CHILD)
+        return PHASE_ORDER.index(previous) < child_index <= PHASE_ORDER.index(current)

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from bestiaux.auth.router import router as auth_router
+from bestiaux.breeding.router import router as breeding_router
 from bestiaux.config import settings
 from bestiaux.core.exception_handlers import (
     authentication_handler,
@@ -34,6 +35,7 @@ app.add_exception_handler(ForbiddenError, forbidden_handler)
 
 app.include_router(auth_router)
 app.include_router(creature_router)
+app.include_router(breeding_router)
 
 
 @app.get("/health")

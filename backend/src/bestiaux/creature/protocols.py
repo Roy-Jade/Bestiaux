@@ -1,7 +1,7 @@
 import uuid
 from typing import Protocol
 
-from bestiaux.creature.domain import CreatureEntity
+from bestiaux.creature.domain import CreatureEntity, MentorData
 
 
 class ICreatureRepository(Protocol):
@@ -12,6 +12,8 @@ class ICreatureRepository(Protocol):
     async def create(self, creature: CreatureEntity) -> CreatureEntity: ...
 
     async def save(self, creature: CreatureEntity) -> None: ...
+
+    async def get_mentor_data(self, mentor_id: uuid.UUID) -> MentorData | None: ...
 
 
 class IGenomeAssigner(Protocol):

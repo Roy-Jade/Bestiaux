@@ -57,6 +57,23 @@ class Creature(Base):
     freeze_started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
+
+    # Daily cycle
+    is_asleep: Mapped[bool] = mapped_column(default=False)
+    woke_up_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    went_to_sleep_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+    # Training
+    trainings_done_today: Mapped[int] = mapped_column(default=0)
+    last_trained_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    pending_training_force: Mapped[float] = mapped_column(Float, default=0.0)
+    pending_training_beauty: Mapped[float] = mapped_column(Float, default=0.0)
+    pending_training_size: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Mentor
+    mentor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("creatures.id"), default=None)
+    mentor_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     owner: Mapped[User] = relationship(back_populates="creatures")  # noqa: F821
@@ -66,6 +83,9 @@ class Creature(Base):
     )
     parent2: Mapped[Creature | None] = relationship(
         foreign_keys=[parent2_id], remote_side="Creature.id"
+    )
+    mentor: Mapped[Creature | None] = relationship(
+        foreign_keys=[mentor_id], remote_side="Creature.id"
     )
     genome: Mapped[list[CreatureGenome]] = relationship(back_populates="creature")  # noqa: F821
     interactions: Mapped[list[InteractionLog]] = relationship(  # noqa: F821

@@ -17,6 +17,7 @@ from bestiaux.core.exceptions import (
     NotFoundError,
 )
 from bestiaux.creature.router import router as creature_router
+from bestiaux.training.router import router as training_router
 
 app = FastAPI(title="Bestiaux API", version="0.1.0")
 
@@ -36,6 +37,7 @@ app.add_exception_handler(ForbiddenError, forbidden_handler)
 app.include_router(auth_router)
 app.include_router(creature_router)
 app.include_router(breeding_router)
+app.include_router(training_router)
 
 
 @app.get("/health")

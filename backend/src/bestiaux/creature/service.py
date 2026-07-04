@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from bestiaux.core.exceptions import ConflictError, NotFoundError
-from bestiaux.creature.domain import CreatureEntity
+from bestiaux.creature.domain import CreatureEntity, MentorData
 from bestiaux.creature.protocols import ICreatureRepository, IGenomeAssigner, IWildPoolUnlocker
 from bestiaux.game_constants import PHASE_ORDER
 from bestiaux.models.creature import LifeStage
@@ -43,9 +43,13 @@ class CreatureService:
         if not creature:
             raise NotFoundError("No active creature")
 
+        mentor_data: MentorData | None = None
+        if creature.mentor_id is not None:
+            mentor_data = await self.creature_repo.get_mentor_data(creature.mentor_id)
+
         previous_stage = creature.life_stage
         now = datetime.now(UTC)
-        creature.apply_reconnection(now)
+        creature.apply_reconnection(now, mentor=mentor_data)
         await self.creature_repo.save(creature)
 
         if creature.is_alive and self._crossed_child_stage(previous_stage, creature.life_stage):

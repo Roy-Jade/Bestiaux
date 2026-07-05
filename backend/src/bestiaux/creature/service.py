@@ -98,6 +98,28 @@ class CreatureService:
         await self.creature_repo.save(creature)
         return creature
 
+    async def set_name(self, user_id: uuid.UUID, name: str) -> CreatureEntity:
+        creature = await self._get_active(user_id)
+        creature.name = name
+        await self.creature_repo.save(creature)
+        return creature
+
+    async def set_biome(self, user_id: uuid.UUID, biome_id: str) -> CreatureEntity:
+        creature = await self._get_active(user_id)
+        if creature.life_stage != LifeStage.CHILD:
+            raise ConflictError("Biome can only be chosen at the Child stage")
+        if creature.biome_id is not None:
+            raise ConflictError("Biome has already been chosen")
+        creature.biome_id = biome_id
+        await self.creature_repo.save(creature)
+        return creature
+
+    async def _get_active(self, user_id: uuid.UUID) -> CreatureEntity:
+        creature = await self.creature_repo.get_active_for_user(user_id)
+        if not creature:
+            raise NotFoundError("No active creature")
+        return creature
+
     async def _get_alive_creature(self, user_id: uuid.UUID) -> CreatureEntity:
         creature = await self.creature_repo.get_active_for_user(user_id)
         if not creature:

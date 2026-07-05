@@ -5,7 +5,13 @@ from bestiaux.auth.domain import UserEntity
 from bestiaux.core.dependencies import get_current_user, get_db
 from bestiaux.creature.domain import CreatureEntity
 from bestiaux.creature.repository import CreatureRepository
-from bestiaux.creature.schemas import CreateCreatureRequest, CreatureResponse, InteractRequest
+from bestiaux.creature.schemas import (
+    CreateCreatureRequest,
+    CreatureResponse,
+    InteractRequest,
+    SetBiomeRequest,
+    SetNameRequest,
+)
 from bestiaux.creature.service import CreatureService
 from bestiaux.genetics.repository import (
     AlleleRepository,
@@ -112,4 +118,24 @@ async def unfreeze(
     service: CreatureService = Depends(_get_creature_service),
 ) -> CreatureResponse:
     creature = await service.unfreeze(user.id)
+    return _to_response(creature)
+
+
+@router.post("/name", response_model=CreatureResponse)
+async def set_name(
+    body: SetNameRequest,
+    user: UserEntity = Depends(get_current_user),
+    service: CreatureService = Depends(_get_creature_service),
+) -> CreatureResponse:
+    creature = await service.set_name(user.id, body.name)
+    return _to_response(creature)
+
+
+@router.post("/biome", response_model=CreatureResponse)
+async def set_biome(
+    body: SetBiomeRequest,
+    user: UserEntity = Depends(get_current_user),
+    service: CreatureService = Depends(_get_creature_service),
+) -> CreatureResponse:
+    creature = await service.set_biome(user.id, body.biome_id)
     return _to_response(creature)

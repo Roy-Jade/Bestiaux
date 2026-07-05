@@ -14,6 +14,14 @@ class InteractRequest(BaseModel):
     action: str  # "feed", "play", "heal"
 
 
+class SetNameRequest(BaseModel):
+    name: str
+
+
+class SetBiomeRequest(BaseModel):
+    biome_id: str
+
+
 class CreatureResponse(BaseModel):
     id: uuid.UUID
     name: str

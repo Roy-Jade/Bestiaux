@@ -1,15 +1,31 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Layout } from "./functions/core/components/Layout";
-import { HomePage } from "./functions/core/pages/HomePage";
+import { BrowserRouter } from "react-router-dom";
+import { AppRouter } from "./functions/core/components/AppRouter";
+import { AuthProvider } from "./stores/AuthContext";
+import "./index.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+    },
+  },
+});
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
 createRoot(rootElement).render(
   <StrictMode>
-    <Layout>
-      <HomePage />
-    </Layout>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   </StrictMode>,
 );

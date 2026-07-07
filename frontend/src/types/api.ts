@@ -96,3 +96,9 @@ export interface AlleleDetail {
   is_dominant: boolean;
   sprite_key: string;
 }
+
+export interface Biome {
+  id: string;
+  name: string;
+  description: string;
+}

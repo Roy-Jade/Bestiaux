@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from bestiaux.auth.router import router as auth_router
+from bestiaux.biomes.router import router as biomes_router
 from bestiaux.breeding.router import router as breeding_router
 from bestiaux.compendium.router import router as compendium_router
 from bestiaux.config import settings
@@ -36,6 +37,7 @@ app.add_exception_handler(ConflictError, conflict_handler)
 app.add_exception_handler(ForbiddenError, forbidden_handler)
 
 app.include_router(auth_router)
+app.include_router(biomes_router)
 app.include_router(creature_router)
 app.include_router(breeding_router)
 app.include_router(training_router)

@@ -24,5 +24,6 @@ class TrainingStatusResponse(BaseModel):
     mentor_id: uuid.UUID | None
     mentor_since: datetime | None
     is_asleep: bool
+    is_en_forme: bool
     woke_up_at: datetime | None
     went_to_sleep_at: datetime | None

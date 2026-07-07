@@ -7,7 +7,7 @@ from bestiaux.auth.domain import UserEntity
 from bestiaux.core.dependencies import get_current_user, get_db
 from bestiaux.creature.domain import CreatureEntity
 from bestiaux.creature.schemas import CreatureResponse
-from bestiaux.training.domain import training_slots_available
+from bestiaux.training.domain import is_informa, training_slots_available
 from bestiaux.training.repository import TrainingCreatureRepository
 from bestiaux.training.schemas import AssignMentorRequest, TrainingStatusResponse, TrainRequest
 from bestiaux.training.service import TrainingService
@@ -102,10 +102,21 @@ async def training_status(
         raise NotFoundError("No active creature")
 
     now = datetime.now(UTC)
+    awake = bool(creature.woke_up_at) and not creature.is_asleep
     slots = (
         training_slots_available(creature.woke_up_at, creature.trainings_done_today, now)
-        if creature.woke_up_at and not creature.is_asleep
+        if awake
         else 0
+    )
+    en_forme = (
+        awake
+        and slots > 0
+        and is_informa(
+            creature.last_trained_at,
+            creature.woke_up_at,
+            creature.trainings_done_today,
+            now,  # type: ignore[arg-type]
+        )
     )
     return TrainingStatusResponse(
         slots_available=slots,
@@ -117,6 +128,7 @@ async def training_status(
         mentor_id=creature.mentor_id,
         mentor_since=creature.mentor_since,
         is_asleep=creature.is_asleep,
+        is_en_forme=en_forme,
         woke_up_at=creature.woke_up_at,
         went_to_sleep_at=creature.went_to_sleep_at,
     )

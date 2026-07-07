@@ -41,6 +41,7 @@ export interface TrainingStatus {
   mentor_id: string | null;
   mentor_since: string | null;
   is_asleep: boolean;
+  is_en_forme: boolean;
   woke_up_at: string | null;
   went_to_sleep_at: string | null;
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { Creature, TrainingStatus } from "../../../types/api";
 
 interface Props {
@@ -9,9 +9,38 @@ interface Props {
 
 function StatBar({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <div className="stat-bar" aria-label={`${label} : ${Math.round(value)} sur 100`}>
+    <div
+      className="stat-bar"
+      role="meter"
+      aria-label={label}
+      aria-valuenow={Math.round(value)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div className="stat-bar__fill" style={{ width: `${value}%`, backgroundColor: color }} />
     </div>
+  );
+}
+
+function TrainingToggle({ training }: { training: TrainingStatus | undefined }) {
+  const { pathname } = useLocation();
+  const isOnTraining = pathname === "/training";
+  const slots = training?.slots_available ?? 0;
+
+  return (
+    <Link
+      to={isOnTraining ? "/creature" : "/training"}
+      className={`training-toggle${isOnTraining ? " training-toggle--active" : ""}`}
+      aria-label={
+        isOnTraining
+          ? "Retour au bestiau"
+          : slots > 0
+            ? `${slots} séance${slots > 1 ? "s" : ""} d'entraînement disponible${slots > 1 ? "s" : ""} — voir l'entraînement`
+            : "Voir l'entraînement"
+      }
+    >
+      💪{slots > 0 && !isOnTraining ? ` ${slots}⚡` : ""}
+    </Link>
   );
 }
 
@@ -31,7 +60,6 @@ export function StatsBar({ creature, training }: Props) {
 
       {open && (
         <div className="stats-bar__content" role="group" aria-label="État du bestiau">
-          {/* Accessibility: phase et biome lisibles par les lecteurs d'écran */}
           <span className="sr-only">
             Phase : {creature.life_stage.toLowerCase()}.
             {creature.biome_id !== null ? ` Biome : ${creature.biome_id}.` : ""}
@@ -41,17 +69,11 @@ export function StatsBar({ creature, training }: Props) {
           <StatBar value={creature.happiness} label="Bonheur" color="#7ed321" />
           <StatBar value={creature.health} label="Santé" color="#e94560" />
 
-          {training !== undefined && training.slots_available > 0 && (
-            <Link
-              to="/training"
-              className="stats-bar__training-slot"
-              aria-label={`${training.slots_available} séance${training.slots_available > 1 ? "s" : ""} d'entraînement disponible${training.slots_available > 1 ? "s" : ""}`}
-            >
-              💪 {training.slots_available}⚡
-            </Link>
-          )}
+          <TrainingToggle training={training} />
         </div>
       )}
+
+      {!open && <TrainingToggle training={training} />}
     </div>
   );
 }

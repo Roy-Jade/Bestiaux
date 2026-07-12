@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { isApiError } from "../../../stores/AuthContext";
 import type { CompatibleCreature, Creature, ParentSource } from "../../../types/api";
-import { useCompatiblePartners } from "../hooks/useBreeding";
+import { useCompatiblePartners, useEligibleParents } from "../hooks/useBreeding";
 import type { useBreeding } from "../hooks/useBreeding";
 
 type BreedMutation = ReturnType<typeof useBreeding>["breed"];
@@ -9,7 +9,8 @@ type CreateFreshMutation = ReturnType<typeof useBreeding>["createFresh"];
 
 type Step =
   | { kind: "choose_option" }
-  | { kind: "choose_parent2"; parent1: ParentSource; parent1Label: string }
+  | { kind: "choose_parent1" }
+  | { kind: "choose_parent2"; parent1: ParentSource; parent1Label: string; fromEligible?: true }
   | {
       kind: "confirm";
       parent1: ParentSource;
@@ -23,6 +24,30 @@ interface Props {
   breed: BreedMutation;
   createFresh: CreateFreshMutation;
   onClose: () => void;
+}
+
+function EligibleParentList({ onSelect }: { onSelect: (c: CompatibleCreature) => void }) {
+  const { data, isLoading } = useEligibleParents();
+
+  return (
+    <div className="breeding-partner-list">
+      {isLoading && <p className="biome-selector__loading">Chargement…</p>}
+
+      {data?.creatures.map((c) => (
+        <button key={c.id} className="biome-selector__item" onClick={() => onSelect(c)}>
+          <span className="biome-selector__item-name">{c.name}</span>
+          <span className="biome-selector__item-desc">
+            Gén. {c.generation} · F {Math.round(c.training_force)} · B{" "}
+            {Math.round(c.training_beauty)} · T {Math.round(c.training_size)}
+          </span>
+        </button>
+      ))}
+
+      {data !== undefined && data.creatures.length === 0 && (
+        <p className="biome-selector__loading">Aucun adulte disponible.</p>
+      )}
+    </div>
+  );
 }
 
 function PartnerList({
@@ -75,8 +100,8 @@ export function BreedingModal({ activeCreature, breed, createFresh, onClose }: P
     breed.mutate({ parent1: step.parent1, parent2: step.parent2 });
   };
 
-  const goToParent2 = (parent1: ParentSource, parent1Label: string) =>
-    setStep({ kind: "choose_parent2", parent1, parent1Label });
+  const goToParent2 = (parent1: ParentSource, parent1Label: string, fromEligible?: true) =>
+    setStep({ kind: "choose_parent2", parent1, parent1Label, fromEligible });
 
   const goToConfirm = (
     parent1: ParentSource,
@@ -84,6 +109,16 @@ export function BreedingModal({ activeCreature, breed, createFresh, onClose }: P
     parent2: ParentSource,
     parent2Label: string,
   ) => setStep({ kind: "confirm", parent1, parent1Label, parent2, parent2Label });
+
+  const handleBack = () => {
+    if (step.kind === "choose_option") {
+      onClose();
+    } else if (step.kind === "choose_parent2" && step.fromEligible) {
+      setStep({ kind: "choose_parent1" });
+    } else {
+      setStep({ kind: "choose_option" });
+    }
+  };
 
   return (
     <div
@@ -96,14 +131,13 @@ export function BreedingModal({ activeCreature, breed, createFresh, onClose }: P
         <div className="breeding-modal__header">
           <h2 id="breeding-modal-title" className="modal__title">
             {step.kind === "choose_option" && "Nouvelle génération"}
+            {step.kind === "choose_parent1" && "Choisir le premier parent"}
             {step.kind === "choose_parent2" && "Choisir le second parent"}
             {step.kind === "confirm" && "Confirmer la reproduction"}
           </h2>
           <button
             className="mentor-panel__back"
-            onClick={
-              step.kind === "choose_option" ? onClose : () => setStep({ kind: "choose_option" })
-            }
+            onClick={handleBack}
             aria-label={step.kind === "choose_option" ? "Fermer" : "Retour"}
           >
             {step.kind === "choose_option" ? "✕" : "←"}
@@ -132,16 +166,7 @@ export function BreedingModal({ activeCreature, breed, createFresh, onClose }: P
 
             <button
               className="biome-selector__item"
-              onClick={() =>
-                setStep({
-                  kind: "choose_parent2",
-                  parent1: { type: "wild" },
-                  parent1Label: "Un autre adulte",
-                })
-              }
-              disabled
-              aria-disabled="true"
-              title="Sélection d'un adulte existant — choisissez d'abord l'adulte"
+              onClick={() => setStep({ kind: "choose_parent1" })}
             >
               <span className="biome-selector__item-name">👥 Un adulte possédé</span>
               <span className="biome-selector__item-desc">
@@ -160,6 +185,12 @@ export function BreedingModal({ activeCreature, breed, createFresh, onClose }: P
               </span>
             </button>
           </div>
+        )}
+
+        {step.kind === "choose_parent1" && (
+          <EligibleParentList
+            onSelect={(c) => goToParent2({ type: "creature", id: c.id }, c.name, true)}
+          />
         )}
 
         {step.kind === "choose_parent2" && (

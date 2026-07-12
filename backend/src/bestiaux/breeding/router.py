@@ -60,13 +60,19 @@ def _to_response(creature) -> CreatureResponse:
 
 @router.get("/compatible", response_model=CompatiblePartnersResponse)
 async def get_compatible_partners(
-    parent_id: uuid.UUID,
     user: UserEntity = Depends(get_current_user),
     service: BreedingService = Depends(_get_breeding_service),
+    parent_id: uuid.UUID | None = None,
 ) -> CompatiblePartnersResponse:
-    creatures = await service.get_compatible_partners(user.id, parent_id)
+    if parent_id is not None:
+        creatures = await service.get_compatible_partners(user.id, parent_id)
+        wild_available = True
+    else:
+        creatures = await service.creature_repo.get_eligible_parents_for_user(user.id)
+        wild_available = False
+
     return CompatiblePartnersResponse(
-        wild_available=True,
+        wild_available=wild_available,
         creatures=[
             CompatibleCreature(
                 id=c.id,

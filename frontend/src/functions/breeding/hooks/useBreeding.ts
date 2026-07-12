@@ -49,3 +49,11 @@ export function useCompatiblePartners(parentId: string | null) {
     retry: false,
   });
 }
+
+export function useEligibleParents() {
+  return useQuery<CompatiblePartners>({
+    queryKey: ["breeding", "eligible"],
+    queryFn: () => breedingApi.getCompatible(),
+    retry: false,
+  });
+}

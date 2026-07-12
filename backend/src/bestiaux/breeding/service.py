@@ -45,9 +45,9 @@ class BreedingService:
         wild_genome = generate_wild_genome(pool_with_baseline, alleles)
         child_genome = inherit_genome(parent_genome, wild_genome, parent.biome_id, None, alleles)
 
-        # Finalize parent before creating child to keep only one active creature at a time
         parent_generation = parent.generation
         await self._finalize_parent(parent)
+        await self._finalize_active_ya_if_any(user_id, exclude={parent_id})
 
         child = await self._create_child(
             user_id=user_id,
@@ -86,6 +86,7 @@ class BreedingService:
         max_generation = max(parent1.generation, parent2.generation)
         await self._finalize_parent(parent1)
         await self._finalize_parent(parent2)
+        await self._finalize_active_ya_if_any(user_id, exclude={parent1_id, parent2_id})
 
         child = await self._create_child(
             user_id=user_id,
@@ -135,6 +136,32 @@ class BreedingService:
             parent.life_stage = LifeStage.ADULT
             parent.is_active = False
         await self.creature_repo.save(parent)
+
+    async def _finalize_active_ya_if_any(self, user_id: uuid.UUID, exclude: set[uuid.UUID]) -> None:
+        """Transitions the current active YA to adult if it is not one of the breeding parents."""
+        active = await self.creature_repo.get_active_for_user(user_id)
+        if active is None or active.id in exclude:
+            return
+        if active.life_stage == LifeStage.YOUNG_ADULT:
+            active.life_stage = LifeStage.ADULT
+            active.is_active = False
+            await self.creature_repo.save(active)
+
+    async def get_compatible_partners(
+        self, user_id: uuid.UUID, parent_id: uuid.UUID
+    ) -> list[CreatureEntity]:
+        """Returns creatures that can breed with parent_id (no consanguinity, under quota)."""
+        candidates = await self.creature_repo.get_eligible_parents_for_user(user_id)
+        parent_ancestors = await self.ancestor_repo.get_all_ancestors(parent_id)
+
+        compatible = []
+        for candidate in candidates:
+            if candidate.id == parent_id:
+                continue
+            candidate_ancestors = await self.ancestor_repo.get_all_ancestors(candidate.id)
+            if not are_related(parent_ancestors, candidate_ancestors, parent_id, candidate.id):
+                compatible.append(candidate)
+        return compatible
 
     async def _build_pool_for_user(self, user_id: uuid.UUID) -> dict[str, list[str]]:
         user_pool = await self.pool_repo.get_unlocked_for_user(user_id)

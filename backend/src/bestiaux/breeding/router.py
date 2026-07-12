@@ -1,9 +1,17 @@
+import uuid
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bestiaux.auth.domain import UserEntity
 from bestiaux.breeding.repository import AncestorRepository
-from bestiaux.breeding.schemas import BreedingRequest, OwnedParent, WildParent
+from bestiaux.breeding.schemas import (
+    BreedingRequest,
+    CompatibleCreature,
+    CompatiblePartnersResponse,
+    OwnedParent,
+    WildParent,
+)
 from bestiaux.breeding.service import BreedingService
 from bestiaux.core.dependencies import get_current_user, get_db
 from bestiaux.core.exceptions import ConflictError
@@ -47,6 +55,30 @@ def _to_response(creature) -> CreatureResponse:
         training_size=creature.training_size,
         time_frozen=creature.time_frozen,
         created_at=creature.created_at,
+    )
+
+
+@router.get("/compatible", response_model=CompatiblePartnersResponse)
+async def get_compatible_partners(
+    parent_id: uuid.UUID,
+    user: UserEntity = Depends(get_current_user),
+    service: BreedingService = Depends(_get_breeding_service),
+) -> CompatiblePartnersResponse:
+    creatures = await service.get_compatible_partners(user.id, parent_id)
+    return CompatiblePartnersResponse(
+        wild_available=True,
+        creatures=[
+            CompatibleCreature(
+                id=c.id,
+                name=c.name,
+                generation=c.generation,
+                biome_id=c.biome_id,
+                training_force=c.training_force,
+                training_beauty=c.training_beauty,
+                training_size=c.training_size,
+            )
+            for c in creatures
+        ],
     )
 
 

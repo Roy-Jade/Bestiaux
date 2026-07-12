@@ -700,3 +700,79 @@ body {
   font-weight: 600;
   color: var(--color-primary);
 }
+
+/* ── Breeding modal ──────────────────────────────────────────────────────── */
+
+.breeding-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.breeding-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: -8px;
+}
+
+.breeding-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breeding-partner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breeding-confirm__parents {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.breeding-confirm__parent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.breeding-confirm__label {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.breeding-confirm__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.breeding-confirm__cross {
+  font-size: 1.4rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.breeding-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.breeding-open-btn-wrapper {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: calc(100% - 32px);
+  max-width: 320px;
+}

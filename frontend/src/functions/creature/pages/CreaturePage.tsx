@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { ActionBar } from "../components/ActionBar";
 import { BiomeSelector } from "../components/BiomeSelector";
 import { CreatureRenderer } from "../components/CreatureRenderer";
@@ -18,6 +19,7 @@ export function CreaturePage() {
     creature,
     training,
     isLoading,
+    error,
     interact,
     freeze,
     unfreeze,
@@ -25,18 +27,30 @@ export function CreaturePage() {
     setBiome,
     wake,
     sleep,
+    createFirst,
   } = useCreature();
 
-  if (isLoading) {
+  // Auto-create first creature if none exists (404 from API)
+  useEffect(() => {
+    if (!isLoading && creature === undefined && error === null) {
+      createFirst.mutate();
+    }
+  }, [isLoading, creature, error, createFirst]);
+
+  if (isLoading || createFirst.isPending) {
     return <div className="loading-screen">Chargement…</div>;
   }
 
-  if (creature === undefined) {
+  if (createFirst.isError || (error !== null && creature === undefined)) {
     return (
       <div className="loading-screen">
-        <p>Pas encore de bestiau. Lance un élevage pour commencer !</p>
+        <p>Une erreur est survenue. Veuillez recharger la page.</p>
       </div>
     );
+  }
+
+  if (creature === undefined) {
+    return <div className="loading-screen">Chargement…</div>;
   }
 
   const isPaused = creature.time_frozen;
@@ -46,28 +60,21 @@ export function CreaturePage() {
 
   return (
     <div className={`creature-page${showBiomePanel ? " creature-page--biome-open" : ""}`}>
-      {/* Stats bar — masquée en cas de pause système */}
       {!awaitingName && !awaitingBiome && <StatsBar creature={creature} training={training} />}
 
-      {/* Bouton app menu (hors scope — emplacement réservé) */}
       <button className="app-menu-btn" aria-label="Menu de l'application" disabled>
         ⚙️
       </button>
 
-      {/* Canvas Pixi */}
       <div
         className={`creature-canvas-wrapper${showBiomePanel ? " creature-canvas-wrapper--shifted" : ""}`}
       >
         <CreatureRenderer biomeId={creature.biome_id} />
       </div>
 
-      {/* Sélecteur de biome (glisse depuis la droite) */}
       {showBiomePanel && <BiomeSelector setBiome={setBiome} unfreeze={unfreeze} />}
-
-      {/* Modale de nommage */}
       {awaitingName && <NameModal setName={setName} unfreeze={unfreeze} />}
 
-      {/* Action bar — masquée en cas de pause système */}
       {!awaitingName && !awaitingBiome && (
         <ActionBar
           isFrozen={isPaused}

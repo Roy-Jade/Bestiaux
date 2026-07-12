@@ -103,3 +103,20 @@ export interface Biome {
   name: string;
   description: string;
 }
+
+export interface CompatibleCreature {
+  id: string;
+  name: string;
+  generation: number;
+  biome_id: string | null;
+  training_force: number;
+  training_beauty: number;
+  training_size: number;
+}
+
+export interface CompatiblePartners {
+  wild_available: boolean;
+  creatures: CompatibleCreature[];
+}
+
+export type ParentSource = { type: "creature"; id: string } | { type: "wild" };

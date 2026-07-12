@@ -37,6 +37,21 @@ class CreatureRepository:
             setattr(db_creature, key, value)
         await self.session.commit()
 
+    async def get_eligible_parents_for_user(self, user_id: uuid.UUID) -> list[CreatureEntity]:
+        """Returns all alive, under-quota adult/YA creatures owned by the user."""
+        from bestiaux.game_constants import MAX_REPRODUCTIONS
+        from bestiaux.models.creature import LifeStage
+
+        result = await self.session.execute(
+            select(Creature).where(
+                Creature.owner_id == user_id,
+                Creature.is_alive.is_(True),
+                Creature.life_stage.in_([LifeStage.YOUNG_ADULT, LifeStage.ADULT]),
+                Creature.reproduction_count < MAX_REPRODUCTIONS,
+            )
+        )
+        return [self._to_entity(c) for c in result.scalars().all()]
+
     async def get_mentor_data(self, mentor_id: uuid.UUID) -> MentorData | None:
         result = await self.session.execute(select(Creature).where(Creature.id == mentor_id))
         mentor = result.scalar_one_or_none()
